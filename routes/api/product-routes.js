@@ -7,15 +7,12 @@ const { Product, Category, Tag, ProductTag } = require('../../models');
 router.get('/', (req, res) => {
   // find all products
   // be sure to include its associated Category and Tag data
+  console.log('made it to products')
   Product.findAll({
-    include: {
-      Category,
-      Tag
-    }
-  })
-    .then(dbUserData => res.json(dbUserData))
+    include: [Category, Tag],
+  }).then(dbUserData => res.json(dbUserData))
     .catch(err => {
-      console.log(err);
+      console.log('received error', err);
       res.status(500).json(err);
     });
 });
@@ -27,16 +24,15 @@ router.get('/:id', (req, res) => {
   Product.findOne({
     where: {
       id: req.params.id
-    }
-  })
-    .then(dbUserData => {
+    },
+    include: [Category, Tag],
+  }).then(dbUserData => {
       if (!dbUserData) {
         res.status(404).json({ message: 'No product found with this id' });
         return;
       }
       res.json(dbUserData);
-    })
-    .catch(err => {
+    }).catch(err => {
       console.log(err);
       res.status(500).json(err);
     });
@@ -66,8 +62,7 @@ router.post('/', (req, res) => {
       }
       // if no product tags, just respond
       res.status(200).json(product);
-    })
-    .then((productTagIds) => res.status(200).json(productTagIds))
+    }).then((productTagIds) => res.status(200).json(productTagIds))
     .catch((err) => {
       console.log(err);
       res.status(400).json(err);
@@ -79,14 +74,12 @@ router.put('/:id', (req, res) => {
   // update product data
   Product.update(req.body, {
     where: {
-      id: req.params.id,
+      id: req.params.id
     },
-  })
-    .then((product) => {
+  }).then((product) => {
       // find all associated tags from ProductTag
       return ProductTag.findAll({ where: { product_id: req.params.id } });
-    })
-    .then((productTags) => {
+    }).then((productTags) => {
       // get list of current tag_ids
       const productTagIds = productTags.map(({ tag_id }) => tag_id);
       // create filtered list of new tag_ids
@@ -108,8 +101,7 @@ router.put('/:id', (req, res) => {
         ProductTag.destroy({ where: { id: productTagsToRemove } }),
         ProductTag.bulkCreate(newProductTags),
       ]);
-    })
-    .then((updatedProductTags) => res.json(updatedProductTags))
+    }).then((updatedProductTags) => res.json(updatedProductTags))
     .catch((err) => {
       // console.log(err);
       res.status(400).json(err);
@@ -121,7 +113,7 @@ router.delete('/:id', (req, res) => {
   Product.destroy({
     where: {
       id: req.params.id
-    }
+    },
   })
     .then(dbProductData => {
       if (!dbProductData) {
@@ -129,8 +121,7 @@ router.delete('/:id', (req, res) => {
         return;
       }
       res.json(dbProductData);
-    })
-    .catch(err => {
+    }).catch(err => {
       console.log(err);
       res.status(500).json(err);
     });
